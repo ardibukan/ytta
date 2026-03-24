@@ -87,8 +87,8 @@ def fetch_with_ytdlp(video_id: str, languages: list[str]) -> str:
         lang_arg = ",".join(languages)
 
         base_args = [
-            "--cookies", COOKIES_FILE,
-            "--remote-components", "ejs:github",
+            "--no-js-runtimes",
+            "--js-runtimes", "node",
             "--skip-download", "--sub-format", "vtt", 
             "--sub-langs", lang_arg, "-o", outtmpl, url
         ]
