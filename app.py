@@ -17,10 +17,12 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # ====== CONFIG (edit if needed) ======
+COOKIES_FILE = os.environ.get("YT_COOKIES_FILE", "/home/allbibek/ytta/cookies.txt")
 VENV_PYTHON = os.environ.get("VENV_PYTHON", "/home/allbibek/ytta/venv/bin/python")
 CACHE_DIR = os.environ.get("YT_CACHE_DIR", "/home/allbibek/cache/yt_transcripts")
 CACHE_TTL_SECONDS = int(os.environ.get("YT_CACHE_TTL_SECONDS", "86400"))  # 1 day
 LANGUAGES = ["id", "en"]
+PROXY_URL = os.environ.get("YT_PROXY_URL", "")
 # =====================================
 
 def _video_url(video_id: str) -> str:
@@ -84,10 +86,19 @@ def fetch_with_ytdlp(video_id: str, languages: list[str]) -> str:
         outtmpl = os.path.join(tmp, "%(id)s.%(ext)s")
         lang_arg = ",".join(languages)
 
-        # 1) manual subs, 2) auto subs
+        base_args = [
+            "--cookies", COOKIES_FILE,
+            "--remote-components", "ejs:github",
+            "--skip-download", "--sub-format", "vtt", 
+            "--sub-langs", lang_arg, "-o", outtmpl, url
+        ]
+
+        if PROXY_URL:
+            base_args = ["--proxy", PROXY_URL] + base_args
+
         attempts = [
-            ["--skip-download", "--write-subs", "--sub-format", "vtt", "--sub-langs", lang_arg, "-o", outtmpl, url],
-            ["--skip-download", "--write-auto-subs", "--sub-format", "vtt", "--sub-langs", lang_arg, "-o", outtmpl, url],
+            base_args + ["--write-subs"],
+            base_args + ["--write-auto-subs"],
         ]
 
         last_err = None
